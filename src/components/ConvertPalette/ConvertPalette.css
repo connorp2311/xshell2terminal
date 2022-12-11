@@ -1,0 +1,24 @@
+.parent {
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 0px 0px;
+  grid-auto-flow: row;
+  grid-template-areas:
+    "input"
+    "output";
+  height: 100vh;
+}
+
+.div1 {
+  height: 10vh;
+  grid-area: input;
+  background-color: #282b30;
+  box-shadow: 0px 1px 6px 1px rgb(0 0 0 / 20%);
+  position: relative;
+  user-select: none;
+}
+.div2 {
+  height: 90vh;
+  grid-area: output;
+  background-color: #1e2124;
+}
