@@ -2,6 +2,7 @@ import * as React from "react";
 import { useState } from "react";
 import TextBox from "../TextBox/TextBox";
 import "./ConvertPalette.css";
+import Popup from 'reactjs-popup';
 
 type Button = {
   name: string;
@@ -64,13 +65,37 @@ function ConvertPalette() {
     }
   };
 
+  const guideCode = `"actions":
+  [
+      {
+          "command": "find",
+          "keys": "ctrl+shift+f"
+      },
+      Code goes here
+  ]
+`
+
   return (
     <div className="parent">
       <div className="div1">
-        <div style={{padding: 10}}>
+        <div style={{ padding: 10 }}>
           <div>Upload xshell .qbl files to convert into terminal config values</div>
           <div><input type="file" onChange={uploadFile} /></div>
-          <div><a href="https://learn.microsoft.com/en-us/windows/terminal/command-palette" target={"_blank"}>Microsoft Docs</a></div>
+          <Popup trigger={<button>Guide</button>} modal={true}>
+            <div className="modal">
+              <h2>Guide</h2>
+              1. Open xshell and browse button sets<br />
+              2. Click on the button set and select "Export"<br />
+              3. Import the .qbl file into this tool<br />
+              4. Open your terminal settings and hit "Open JSON file"<br />
+              5. Copy the output from this tool and paste it into the bottom of the actions array<br /><br />
+              Example:<br />
+              <div style={{ height: 220 }}><TextBox data={guideCode}></TextBox></div>
+              <a href="https://learn.microsoft.com/en-us/windows/terminal/command-palette" target={"_blank"}>Microsoft Docs</a>
+              <br />
+              <a href="https://netsarang.atlassian.net/wiki/spaces/ENSUP/pages/31654174/Managing+the+quick+command+sets" target={"_blank"}>Netsarang Docs</a>
+            </div>
+          </Popup>
         </div>
       </div>
       <div className="div2">
