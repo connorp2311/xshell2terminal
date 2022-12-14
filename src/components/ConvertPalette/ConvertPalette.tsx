@@ -12,40 +12,102 @@ type Button = {
 function ConvertPalette() {
   const [output, setOutput] = useState<string>("");
 
-  //Function to seprate the name of the button and the code
-  const getButtonNameAndCode = (line: string) => {
-    let name = line.substring(line.indexOf('=') + 1, line.indexOf('\\n'));
-    let code = line.substring(line.indexOf('\\n'), line.length);
-    //remove random number at start of code, no idea why its there
-    code = code.substring(code.indexOf(']') + 1, code.length);
-    const output: Button = {
-      name,
-      code
+  const getButtonsV1 = (fileContent: string) => {
+    console.log("Generating config for old version");
+    let buttons: Button[] = [];
+    //get each button id
+    const regex = /^CR_\d+=.*/gm;
+    const matches = fileContent.match(regex);
+
+    if (matches) {
+      let buttonIndexs: string[] = [];
+
+      matches.forEach(match => {
+        //get number after =
+        const regex = /=.*/g;
+        const matchNumber = match.match(regex);
+        if (matchNumber) {
+          //get numbert after _ and before =
+          const number = match.substring(match.indexOf('_') + 1, match.indexOf('='));
+          buttonIndexs.push(number);
+        }
+      });
+
+      buttonIndexs.forEach(index => {
+        //get the button name what starts with "Label_index="
+        const regexName = new RegExp(`Label_${index}=.*`);
+        const matchName = fileContent.match(regexName);
+        
+        //get the button code what starts with "Button_index="
+        const regexCode = new RegExp(`Text_${index}=.*`);
+        const matchCode = fileContent.match(regexCode);
+
+        if (matchName && matchCode) {
+          const name: string = matchName[0].substring(matchName[0].indexOf('=') + 1, matchName[0].length);
+          const code: string = matchCode[0].substring(matchCode[0].indexOf('=') + 1, matchCode[0].length);
+          const button: Button = {
+            name,
+            code
+          };
+          console.log(button);
+          buttons.push(button);
+        }
+      });
     };
-    return output;
+    return buttons;
   };
 
-
-  const getButtons = (fileContent: string) => {
+  const getButtonsV2 = (fileContent: string) => {
+    console.log("Generating config for new version");
     let buttons: Button[] = [];
     //get each line that starts with "Button_#="
     const regex = /Button_\d+=.*/g;
     const matches = fileContent.match(regex);
     if (matches) {
       matches.forEach(match => {
-        buttons.push(getButtonNameAndCode(match));
+        let name = match.substring(match.indexOf('=') + 1, match.indexOf('\\n'));
+        let code = match.substring(match.indexOf('\\n'), match.length);
+        //remove random number at start of code, no idea why its there
+        code = code.substring(code.indexOf(']') + 1, code.length);
+        const button: Button = {
+          name,
+          code
+        };
+        console.log(button);
+        buttons.push(button);
       });
     }
     return buttons;
   };
 
-  const generateConfig = (fileName: string, buttons: Button[]) => {
+  const generateConfig = (fileName: string, fileContent: string) => {
+    //determine export version
+    let version = 1;
+    if (fileContent.indexOf('[Info]') === 0) {
+      version = 2;
+    }
+
     let config = "";
-    config += `{\n\t"name": "${fileName}",\n\t"icon": "\ud83d\udd35",\n\t"commands": [\n`;
-    buttons.forEach(button => {
-      config += "\t\t" + JSON.stringify({ "name": button.name, "command": { "action": "sendInput", "input": button.code } }) + ",\n";
-    });
-    config += "\t]\n}";
+    let buttons: Button[] = [];
+
+    if (version === 1) {
+      buttons = getButtonsV1(fileContent);
+      config += `{\n\t"name": "${fileName}",\n\t"icon": "\ud83d\udd35",\n\t"commands": [\n`;
+      buttons.forEach(button => {
+        config += "\t\t" + JSON.stringify({ "name": button.name, "command": { "action": "sendInput", "input": button.code } }) + ",\n";
+      });
+      config += "\t]\n}";
+    }
+
+    if (version === 2) {
+      buttons = getButtonsV2(fileContent);
+      config += `{\n\t"name": "${fileName}",\n\t"icon": "\ud83d\udd35",\n\t"commands": [\n`;
+      buttons.forEach(button => {
+        config += "\t\t" + JSON.stringify({ "name": button.name, "command": { "action": "sendInput", "input": button.code } }) + ",\n";
+      });
+      config += "\t]\n}";
+    }
+
     setOutput(config);
   };
 
@@ -57,8 +119,7 @@ function ConvertPalette() {
       const reader = new FileReader();
       reader.onload = (e) => {
         if (e.target) {
-          let buttons: Button[] = getButtons(e.target.result as string);
-          generateConfig(fileName, buttons);
+          generateConfig(fileName, e.target.result as string);
         }
       };
       reader.readAsText(e.target.files[0]);
