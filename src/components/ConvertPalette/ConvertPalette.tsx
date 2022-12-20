@@ -37,7 +37,7 @@ function ConvertPalette() {
         //get the button name what starts with "Label_index="
         const regexName = new RegExp(`Label_${index}=.*`);
         const matchName = fileContent.match(regexName);
-        
+
         //get the button code what starts with "Button_index="
         const regexCode = new RegExp(`Text_${index}=.*`);
         const matchCode = fileContent.match(regexCode);
@@ -83,31 +83,31 @@ function ConvertPalette() {
   const generateConfig = (fileName: string, fileContent: string) => {
     //determine export version
     let version = 1;
+    let config = "";
+    let buttons: Button[] = [];
+
     if (fileContent.indexOf('[Info]') === 0) {
       version = 2;
     }
 
-    let config = "";
-    let buttons: Button[] = [];
-
     if (version === 1) {
       buttons = getButtonsV1(fileContent);
-      config += `{\n\t"name": "${fileName}",\n\t"icon": "\ud83d\udd35",\n\t"commands": [\n`;
-      buttons.forEach(button => {
-        config += "\t\t" + JSON.stringify({ "name": button.name, "command": { "action": "sendInput", "input": button.code } }) + ",\n";
-      });
-      config += "\t]\n}";
     }
 
     if (version === 2) {
       buttons = getButtonsV2(fileContent);
-      config += `{\n\t"name": "${fileName}",\n\t"icon": "\ud83d\udd35",\n\t"commands": [\n`;
-      buttons.forEach(button => {
-        config += "\t\t" + JSON.stringify({ "name": button.name, "command": { "action": "sendInput", "input": button.code } }) + ",\n";
-      });
-      config += "\t]\n}";
     }
 
+    config += `{\n\t"name": "${fileName}",\n\t"icon": "\ud83d\udd35",\n\t"commands": [\n`;
+    buttons.forEach(button => {
+      config += "\t\t" + JSON.stringify({ "name": button.name, "command": { "action": "sendInput", "input": button.code } });
+      //if this isnt the last button add a comma
+      if (button !== buttons[buttons.length - 1]) {
+        config += ",";
+      }
+      config += "\n";
+    });
+    config += "\t]\n}";
     setOutput(config);
   };
 
