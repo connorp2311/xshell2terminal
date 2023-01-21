@@ -64,7 +64,7 @@ function ConvertPalette() {
     const version = determineVersion(fileContent);
     const buttons = version === 1 ? getButtonsV1(fileContent) : getButtonsV2(fileContent);
     const commands = buttons.map(({ name, code }) => ({ name, command: { action: "sendInput", input: code } }));
-    const config = JSON.stringify({ name: fileName, icon: "\ud83d\udd35", commands }, null, 4);
+    const config = JSON.stringify({ name: fileName, icon: "\ud83d\udd35", commands }, null, 2);
     setOutput(config);
   };
 
@@ -96,8 +96,12 @@ function ConvertPalette() {
   return (
     <div id="main" style={{ display: 'flex' }}>
       <div id="leftSide" style={{ flex: 0.5 }}>
-        <div>Upload xshell .qbl files to convert into terminal config values</div>
-        <div><input type="file" onChange={uploadFile} /></div>
+        <div className="title">Xshell 2 Terminal</div>
+        <br />
+        <label htmlFor="file-upload" className="custom-file-upload">
+          Upload File
+        </label>
+        <div><input id="file-upload" type="file" onChange={uploadFile} /></div>
         <br />
         1. Open xshell and browse button sets<br />
         2. Click on the button set and select "Export"<br />

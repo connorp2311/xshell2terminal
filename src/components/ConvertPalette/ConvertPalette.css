@@ -4,6 +4,15 @@
   --dark-color: #1f2430;
   --radius: 10px;
   --shadow: 0 0 20px rgba(0, 0, 0, 0.4);
+  font-size: calc(1.525rem + 3.3vw);
+  --bs-font-sans-serif: system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans","Liberation Sans",sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji";
+  --bs-font-monospace: SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;
+  --bs-gradient: linear-gradient(180deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0));
+  color: #e4e4e4;
+}
+
+.title {
+  font-size: 2em;
 }
 
 #main {
@@ -17,8 +26,9 @@
 #leftSide {
   float: left;
   height: auto;
+  font-family: var(--bs-font-sans-serif) !important;
   background-color: var(--light-color);
-  padding: 10px;
+  padding: 20px;
   box-sizing: border-box;
   border-radius: var(--radius) 0 0 var(--radius);
   box-shadow: var(--shadow);
@@ -33,6 +43,7 @@
 #rightSide {
   float: right;
   height: auto;
+  font-family: var(--bs-font-monospace) !important;
   background-color: var(--dark-color);
   padding: 10px;
   box-sizing: border-box;
@@ -54,4 +65,20 @@
 ::-webkit-scrollbar-thumb {
   background-color: var(--light-color);
   border-radius: 5px;
+}
+
+/* Match file input to theme */
+input[type="file"] {
+  display: none;
+}
+
+.custom-file-upload {
+  background-color: var(--dark-color);
+  border-radius: 5px;
+  padding: 0.5em;
+  cursor: pointer;
+}
+
+.custom-file-upload:hover {
+  filter: brightness(1.2);
 }
