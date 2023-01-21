@@ -13,101 +13,58 @@ function ConvertPalette() {
   const [output, setOutput] = useState<string>("");
 
   const getButtonsV1 = (fileContent: string) => {
-    console.log("Generating config for old version");
-    let buttons: Button[] = [];
-    //get each button id
-    const regex = /^CR_\d+=.*/gm;
-    const matches = fileContent.match(regex);
+    let buttonList: Button[] = [];
+    // get each button id
+    const buttonIdRegex = /^CR_(\d+)=.*/gm;
+    let buttonIdMatch;
+    while ((buttonIdMatch = buttonIdRegex.exec(fileContent)) !== null) {
+      //get the button name that starts with "Label_index="
+      const buttonNameRegex = new RegExp(`Label_${buttonIdMatch[1]}=([^\n]+)`);
+      const buttonNameMatch = fileContent.match(buttonNameRegex);
 
-    if (matches) {
-      let buttonIndexs: string[] = [];
+      //get the button code that starts with "Button_index="
+      const buttonCodeRegex = new RegExp(`Text_${buttonIdMatch[1]}=([^\n]+)`);
+      const buttonCodeMatch = fileContent.match(buttonCodeRegex);
 
-      matches.forEach(match => {
-        //get number after =
-        const regex = /=.*/g;
-        const matchNumber = match.match(regex);
-        if (matchNumber) {
-          //get numbert after _ and before =
-          const number = match.substring(match.indexOf('_') + 1, match.indexOf('='));
-          buttonIndexs.push(number);
-        }
-      });
-
-      buttonIndexs.forEach(index => {
-        //get the button name what starts with "Label_index="
-        const regexName = new RegExp(`Label_${index}=.*`);
-        const matchName = fileContent.match(regexName);
-
-        //get the button code what starts with "Button_index="
-        const regexCode = new RegExp(`Text_${index}=.*`);
-        const matchCode = fileContent.match(regexCode);
-
-        if (matchName && matchCode) {
-          const name: string = matchName[0].substring(matchName[0].indexOf('=') + 1, matchName[0].length);
-          const code: string = matchCode[0].substring(matchCode[0].indexOf('=') + 1, matchCode[0].length);
-          const button: Button = {
-            name,
-            code
-          };
-          console.log(button);
-          buttons.push(button);
-        }
-      });
-    };
-    return buttons;
+      if (buttonNameMatch && buttonCodeMatch) {
+        const button: Button = {
+          name: buttonNameMatch[1],
+          code: buttonCodeMatch[1]
+        };
+        buttonList = [...buttonList, button];
+      }
+    }
+    return buttonList;
   };
 
   const getButtonsV2 = (fileContent: string) => {
-    console.log("Generating config for new version");
-    let buttons: Button[] = [];
+    let buttonList: Button[] = [];
     //get each line that starts with "Button_#="
-    const regex = /Button_\d+=.*/g;
-    const matches = fileContent.match(regex);
-    if (matches) {
-      matches.forEach(match => {
-        let name = match.substring(match.indexOf('=') + 1, match.indexOf('\\n'));
-        let code = match.substring(match.indexOf('\\n'), match.length);
+    const buttonLineRegex = /Button_\d+=.*/g;
+    const buttonLineMatches = fileContent.match(buttonLineRegex);
+    if (buttonLineMatches) {
+      buttonLineMatches.forEach(buttonLine => {
+        let buttonName = buttonLine.substring(buttonLine.indexOf('=') + 1, buttonLine.indexOf('\\n'));
+        let buttonCode = buttonLine.substring(buttonLine.indexOf('\\n'), buttonLine.length);
         //remove random number at start of code, no idea why its there
-        code = code.substring(code.indexOf(']') + 1, code.length);
+        buttonCode = buttonCode.substring(buttonCode.indexOf(']') + 1, buttonCode.length);
         const button: Button = {
-          name,
-          code
+          name: buttonName,
+          code: buttonCode
         };
-        console.log(button);
-        buttons.push(button);
+        buttonList.push(button);
       });
     }
-    return buttons;
+    return buttonList;
   };
 
+  const determineVersion = (fileContent: string) => fileContent.indexOf('[Info]') === 0 ? 2 : 1;
+
   const generateConfig = (fileName: string, fileContent: string) => {
-    //determine export version
-    let version = 1;
-    let config = "";
-    let buttons: Button[] = [];
-
-    if (fileContent.indexOf('[Info]') === 0) {
-      version = 2;
-    }
-
-    if (version === 1) {
-      buttons = getButtonsV1(fileContent);
-    }
-
-    if (version === 2) {
-      buttons = getButtonsV2(fileContent);
-    }
-
-    config += `{\n\t"name": "${fileName}",\n\t"icon": "\ud83d\udd35",\n\t"commands": [\n`;
-    buttons.forEach(button => {
-      config += "\t\t" + JSON.stringify({ "name": button.name, "command": { "action": "sendInput", "input": button.code } });
-      //if this isnt the last button add a comma
-      if (button !== buttons[buttons.length - 1]) {
-        config += ",";
-      }
-      config += "\n";
-    });
-    config += "\t]\n}";
+    const version = determineVersion(fileContent);
+    const buttons = version === 1 ? getButtonsV1(fileContent) : getButtonsV2(fileContent);
+    const commands = buttons.map(({ name, code }) => ({ name, command: { action: "sendInput", input: code } }));
+    const config = JSON.stringify({ name: fileName, icon: "\ud83d\udd35", commands }, null, 4);
     setOutput(config);
   };
 
@@ -115,14 +72,14 @@ function ConvertPalette() {
   const uploadFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const file = e.target.files[0];
-      const fileName = file.name.substring(0, file.name.indexOf('.'));
+      const fileName = file.name.split('.')[0];
       const reader = new FileReader();
-      reader.onload = (e) => {
-        if (e.target) {
-          generateConfig(fileName, e.target.result as string);
-        }
-      };
-      reader.readAsText(e.target.files[0]);
+      reader.addEventListener('load', () => {
+        generateConfig(fileName, reader.result as string);
+      });
+      reader.readAsText(file);
+    } else {
+      console.log("Please upload a file");
     }
   };
 
@@ -137,30 +94,24 @@ function ConvertPalette() {
 `
 
   return (
-    <div className="parent">
-      <div className="div1">
-        <div style={{ padding: 10 }}>
-          <div>Upload xshell .qbl files to convert into terminal config values</div>
-          <div><input type="file" onChange={uploadFile} /></div>
-          <Popup trigger={<button>Guide</button>} modal={true}>
-            <div className="modal">
-              <h2>Guide</h2>
-              1. Open xshell and browse button sets<br />
-              2. Click on the button set and select "Export"<br />
-              3. Import the .qbl file into this tool<br />
-              4. Open your terminal settings and hit "Open JSON file"<br />
-              5. Copy the output from this tool and paste it into the bottom of the actions array<br /><br />
-              Example:<br />
-              <div style={{ height: 220 }}><TextBox data={guideCode}></TextBox></div>
-              <a href="https://learn.microsoft.com/en-us/windows/terminal/command-palette" target={"_blank"}>Microsoft Docs</a>
-              <br />
-              <a href="https://netsarang.atlassian.net/wiki/spaces/ENSUP/pages/31654174/Managing+the+quick+command+sets" target={"_blank"}>Netsarang Docs</a>
-            </div>
-          </Popup>
-        </div>
+    <div id="main" style={{ display: 'flex' }}>
+      <div id="leftSide" style={{ flex: 0.5 }}>
+        <div>Upload xshell .qbl files to convert into terminal config values</div>
+        <div><input type="file" onChange={uploadFile} /></div>
+        <br />
+        1. Open xshell and browse button sets<br />
+        2. Click on the button set and select "Export"<br />
+        3. Import the .qbl file into this tool<br />
+        4. Open your terminal settings and hit "Open JSON file"<br />
+        5. Copy the output from this tool and paste it into the bottom of the actions array<br /><br />
+        Example:<br />
+        <div style={{ height: 220 }}><TextBox data={guideCode}></TextBox></div>
+        <a href="https://learn.microsoft.com/en-us/windows/terminal/command-palette" target={"_blank"}>Microsoft Docs</a>
+        <br />
+        <a href="https://netsarang.atlassian.net/wiki/spaces/ENSUP/pages/31654174/Managing+the+quick+command+sets" target={"_blank"}>Netsarang Docs</a>
       </div>
-      <div className="div2">
-        <TextBox data={output}></TextBox>
+      <div id="rightSide" style={{ flex: 1 }}>
+        <TextBox data={output} />
       </div>
     </div>
   );
