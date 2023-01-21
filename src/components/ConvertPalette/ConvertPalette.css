@@ -1,9 +1,9 @@
 :root {
-  --bg-color: #1b1c24;
-  --light-color: #333849;
-  --dark-color: #282936;
+  --bg-color: #191b20;
+  --light-color: #2b364d;
+  --dark-color: #1f2430;
   --radius: 10px;
-  --shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+  --shadow: 0 0 20px rgba(0, 0, 0, 0.4);
 }
 
 #main {
