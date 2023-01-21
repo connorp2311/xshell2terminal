@@ -10,7 +10,7 @@ type Button = {
 };
 
 function ConvertPalette() {
-  const [output, setOutput] = useState<string>("");
+  const [output, setOutput] = useState<string>("Output will appear here...");
 
   const getButtonsV1 = (fileContent: string) => {
     let buttonList: Button[] = [];
@@ -105,7 +105,7 @@ function ConvertPalette() {
         <br />
         1. Open xshell and browse button sets<br />
         2. Click on the button set and select "Export"<br />
-        3. Import the .qbl file into this tool<br />
+        3. Upload the .qbl file into this tool<br />
         4. Open your terminal settings and hit "Open JSON file"<br />
         5. Copy the output from this tool and paste it into the bottom of the actions array<br /><br />
         Example:<br />
